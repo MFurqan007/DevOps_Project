@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS  # Import CORS
 from pymongo import MongoClient
@@ -5,7 +6,10 @@ app = Flask(__name__)
 
 CORS(app)  # Enable CORS for your Flask app
 
-client = MongoClient('mongodb://localhost:27017/') 
+
+mongo_uri = os.environ.get('MONGO_URI')
+
+client = MongoClient(mongo_uri) 
 db = client['Appointment']
 collection = db['appointments'] 
 # hardappointments = [

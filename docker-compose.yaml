@@ -1,0 +1,131 @@
+# version: '3.9'
+# services:
+#   mongodb_appointments:
+#     image: mongo:latest
+#     container_name: mongo_appointments
+#     ports:
+#     - "27018:27017"
+#     environment:
+#     - MONGO_DATABASE=Furqan
+#     - MONGO_ROOT_USERNAME=admin
+#     - MONGO_ROOT_PASSWORD=1234
+#     volumes:
+#     - mongodb_appointments:/data/db
+#     - ./mongo_appointments_init.js:/docker-entrypoint-initdb.d/mongo_appointments_init.js
+
+# volumes:
+#   mongodb_appointments:
+  # mongodb_doctor:
+  #   image: mongo:latest
+  #   container_name: mongo_doctors
+  #   ports:
+  #   - "27019:27017"
+  #   volumes:
+    
+
+# services:
+#   mongo_db:
+#     image: mongo:latest
+#     container_name: mongoTest
+#     ports:
+#     - "27018:27017"
+#     # environment:
+#     # - MONGO_INITDB_ROOT_USERNAME=admin
+#     # - MONGO_INITDB_ROOT_PASSWORD=password
+#     # volumes:
+#     # - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+# volumes:
+#   mongo_db:
+
+version: '3.9'
+services:
+  mongo-appointment:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: Appointment
+    networks:
+      - appointment-mongo-flask
+    volumes:
+      - ./ainit-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+  
+  mongo-doctor:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27019:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: Doctor
+    networks:
+      - doctor-mongo-flask
+    volumes:
+      - ./dinit-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+
+  backend-appointment-flask:
+    build:
+      context: appointments/
+      dockerfile: Dockerfile
+    depends_on:
+    - mongo-appointment
+    ports:
+    - "7070:7070"
+    environment:
+      - MONGO_URI=mongodb://admin:password@mongo-appointment:27017/?authSource=admin
+    networks:
+    - appointment-mongo-flask
+    - appointment-flask-node
+
+  backend-doctor-flask:
+    build:
+      context: doctors/
+      dockerfile: Dockerfile
+    depends_on:
+    - mongo-doctor
+    ports:
+    - "9090:9090"
+    environment:
+      - MONGO_URI=mongodb://admin:password@mongo-doctor:27017/?authSource=admin
+    networks:
+    - doctor-mongo-flask
+    - doctor-flask-node
+
+  frontend-node:
+    build:
+      context: frontend/
+      dockerfile: Dockerfile
+    depends_on:
+    - backend-appointment-flask
+    - backend-doctor-flask
+    env_file: ./frontend/.env
+    ports: 
+    - "3000:3000"
+    networks:
+    - doctor-flask-node
+    - appointment-flask-node
+
+
+networks:
+  appointment-mongo-flask:
+    name: appointment-mongo-flask
+  
+  doctor-mongo-flask:
+    name: doctor-mongo-flask
+  
+  doctor-flask-node:
+    name: doctor-flask-node
+
+  appointment-flask-node:
+    name: appointment-flask-node
+
+
+
+
+
+
+  
