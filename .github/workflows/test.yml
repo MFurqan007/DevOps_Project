@@ -16,18 +16,18 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: '0'
-    - name: semantic version
-      uses: paulhatch/semantic-version@v5.3.0
-      with:
-        tag_prefix: "v"
-        major_pattern: "Major"
-        minor_pattern: "Minor"
-        patch_pattern: "Patch"
-        version_format: "${major}.${minor}.${patch}"
-        change_path: "frontend/"
-        namespace: main
-        bump_each_commit: false
-        search_commit_body: true
+    # - name: semantic version
+    #   uses: paulhatch/semantic-version@v5.3.0
+    #   with:
+    #     tag_prefix: "v"
+    #     major_pattern: "Major"
+    #     minor_pattern: "Minor"
+    #     patch_pattern: "Patch"
+    #     version_format: "${major}.${minor}.${patch}"
+    #     change_path: "frontend/"
+    #     namespace: main
+    #     bump_each_commit: false
+    #     search_commit_body: true
         
     
     - name: Push tag
@@ -36,4 +36,3 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
         WITH_V: true
-        DEFAULT_BUMP: "Major"
