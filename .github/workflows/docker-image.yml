@@ -27,7 +27,8 @@ jobs:
         search_commit_body: true
     - name: Push tag to origin
       run:  |
-        git tag -a v${{ steps.semantic version.outputs.version }} -m "Version ${{ steps.semantic version.outputs.version }}"
-        git push origin v${{ steps.semantic version.outputs.version }}
+          tag_version="${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}"
+          git tag -a "v${tag_version}" -m "Version $tag_version"
+          git push origin "v${tag_version}"
 
         
