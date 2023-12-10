@@ -26,7 +26,7 @@ jobs:
         version_format: "${major}.${minor}.${patch}"
         change_path: "frontend/"
         namespace: main
-        bump_each_commit: true
+        bump_each_commit: false
         search_commit_body: true
         
     
