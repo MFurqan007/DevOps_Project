@@ -1,0 +1,95 @@
+name: versioning
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    # Required permissions
+    # permissions:
+    #   pull-requests: read
+    # Set job outputs to values from filter step
+    outputs:
+      doctors: ${{ steps.filter.outputs.doctors }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      appointments:  ${{ steps.filter.outputs.appointments}}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: '0'
+    
+    # For pull requests it's not necessary to checkout the code
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          doctors:
+            - 'doctors/**'
+          frontend:
+            - 'frontend/**'
+          appointments:
+            - 'appointments/**'
+      
+
+  appointments:
+    needs: changes
+    if: ${{ needs.changes.outputs.appointments == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: '0'
+    - name: Generate Version
+      id: generate_version
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+        WITH_V: true
+        DRY_RUN: true
+        DEFAULT_BUMP: "patch"
+    # - name: Push tag
+    #   uses: anothrNick/github-tag-action@1.67.0
+    #   id: tag_version
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+    #     WITH_V: true
+    - name: Generate Vars
+      id: generate_vars
+      run: |
+        IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
+        # Just Image name
+        IMAGE_NAME=wahajali14/appointment
+        #Image ID= Name + Tag
+        IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+        # IMAGE_REPO=$REGISTRY/$IMAGE_ID
+        echo "Image: $IMAGE_ID"
+        # echo "Registry: {{REGISTRY}}"
+        IMAGE_LTS=$IMAGE_NAME:latest
+        echo "Image_lts=$IMAGE_LTS" >>$GITHUB_OUTPUT 
+        echo "image=$IMAGE_ID" >>$GITHUB_OUTPUT
+        echo "image_name=$IMAGE_NAME" >>$GITHUB_OUTPUT
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3.0.0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to DockerHub
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Echo Output
+      run: |
+        echo "Image from Output: ${{ steps.generate_vars.outputs.image }}"
+        echo "Repo from Output: ${{ steps.generate_vars.outputs.image_name }}"   
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5.0.0
+      with:
+        context: appointments
+        file: ./appointments/Dockerfile
+        # pull: true
+        push: true
+        tags: ${{ steps.generate_vars.outputs.image }},${{ steps.generate_vars.outputs.Image_lts }}
