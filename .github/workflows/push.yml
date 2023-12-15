@@ -1,4 +1,4 @@
-name: versioning
+name: push versioning
 
 on:
   push:
@@ -46,7 +46,7 @@ jobs:
       id: generate_version
       uses: anothrNick/github-tag-action@1.67.0
       env:
-        GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
         WITH_V: true
         DRY_RUN: true
         DEFAULT_BUMP: "patch"
@@ -61,7 +61,7 @@ jobs:
       run: |
         IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
         # Just Image name
-        IMAGE_NAME=wahajali14/appointment
+        IMAGE_NAME=mfurqan007/devops_p_appointments
         #Image ID= Name + Tag
         IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
         # IMAGE_REPO=$REGISTRY/$IMAGE_ID
