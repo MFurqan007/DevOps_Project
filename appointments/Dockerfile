@@ -12,6 +12,10 @@ EXPOSE 7070
 # ENV MONGO_PASSWORD="123"
 # testing new version
 # testing new version2
+# testing new version3
+
+
+
 
 RUN pip install flask \
     pip install flask_cors \
