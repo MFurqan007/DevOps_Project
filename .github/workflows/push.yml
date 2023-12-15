@@ -106,10 +106,10 @@ jobs:
             sed -i "s/${compose_version}/${latest_version}/g" docker-compose.yaml
             git config --local user.email "mfurqannasir24@gmail.com"
             git config --local user.name "mfurqan007"
-            git remote add origin_with_token https://${{secrets.TOKEN}}@github.com/mfurqan007/DevOps_Project.git
-            git add docker-compose.yaml
-            git commit -m "Update Docker image version to $latest_version"
-            git push origin_with_token main
+            # git remote add origin_with_token https://github.com/mfurqan007/DevOps_Project.git
+            # git add docker-compose.yaml
+            # git commit -m "Update Docker image version to $latest_version"
+            # git push origin_with_token main
             git commit -m "Update Docker image version to $latest_version" docker-compose.yaml
             git push
         fi
