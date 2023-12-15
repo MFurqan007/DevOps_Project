@@ -111,5 +111,5 @@ jobs:
             # git commit -m "Update Docker image version to $latest_version"
             # git push origin_with_token main
             git commit -m "Update Docker image version to $latest_version" docker-compose.yaml
-            git push
+            git push https://${{secrets.TOKEN}}@github.com/MFurqan007/DevOps_Project.git
         fi
