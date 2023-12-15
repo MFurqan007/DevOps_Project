@@ -10,7 +10,7 @@ EXPOSE 7070
 # ENV MONGO_URL="mongodb://localhost:27017/"
 # ENV MONGO_USERNAME="test"
 # ENV MONGO_PASSWORD="123"
-
+# testing new version
 
 RUN pip install flask \
     pip install flask_cors \
