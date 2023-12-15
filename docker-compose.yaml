@@ -68,7 +68,7 @@ services:
       - ./dinit-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
 
   backend-appointment-flask:
-    image: mfurqan007/devops_p_appointments:v.1.0
+    image: mfurqan007/devops_p_appointments:
     depends_on:
     - mongo-appointment
     ports:
@@ -80,7 +80,7 @@ services:
     - appointment-flask-node
 
   backend-doctor-flask:
-    image: mfurqan007/devops_p_doctors:v.1.0
+    image: mfurqan007/devops_p_doctors:
     depends_on:
     - mongo-doctor
     ports:
@@ -92,7 +92,7 @@ services:
     - doctor-flask-node
 
   frontend-node:
-    image: mfurqan007/devops_p_frontend:v.1.0
+    image: mfurqan007/devops_p_frontend:
     depends_on:
     - backend-appointment-flask
     - backend-doctor-flask
