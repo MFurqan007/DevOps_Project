@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doctor-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: docbackend
+      app: schedule
+  template:
+    metadata:
+      labels:
+        tier: docbackend
+        app: schedule
+    spec:
+      containers:
+        - name: docbackend
+          image: mfurqan007/devops_p_doctors:v.1.0
+          ports:
+            - containerPort: 9090
+              name: tcp
+          env:
+            - name: MONGO_URI
+              value: mongodb://admin:password@doctormongodb-service:27017/
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docbackend
+spec:
+  selector:
+    tier: docbackend
+    app: schedule
+  ports:
+    - protocol: TCP
+      port: 9091
+      targetPort: 9090

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: backend
+      app: schedule
+  template:
+    metadata:
+      labels:
+        tier: backend
+        app: schedule
+    spec:
+      containers:
+        - name: backend
+          image: mfurqan007/devops_p_appointments:v.1.0
+          ports:
+            - containerPort: 7070
+              name: tcp
+          env:
+            - name: MONGO_URI
+              value: mongodb://admin:password@mongodb-service:27017/
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 7070
+            initialDelaySeconds: 7
+            periodSeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 7070
+            initialDelaySeconds: 7
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    tier: backend
+    app: schedule
+  ports:
+    - protocol: TCP
+      port: 7071
+      targetPort: 7070

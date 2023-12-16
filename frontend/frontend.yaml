@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-configmap
+data:
+  .env: |
+    DOCTORS_SERVICE_URL=docbackend:9091
+    APPOINTMENTS_SERVICE_URL=backend:7071
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      tier: frontend
+      app: dice
+  template:
+    metadata:
+      labels:
+        tier: frontend
+        app: dice
+    spec:
+      containers:
+        - name: frontend
+          image: mfurqan007/devops_p_frontend
+          env:
+            - name: APPOINTMENTS_SERVICE_URL
+              value: backend:7071
+            - name: DOCTORS_SERVICE_URL
+              value: docbackend:9091
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          ports:
+            - containerPort: 3000
+              name: tcp
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/app/.env"
+              subPath: .env
+      volumes:
+        - name: config-volume
+          configMap:
+            name: env-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  type: NodePort
+  selector:
+    tier: frontend
+    app: dice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      nodePort: 31510

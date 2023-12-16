@@ -91,3 +91,123 @@ jobs:
         # pull: true
         push: true
         tags: ${{ steps.generate_vars.outputs.image }}
+
+doctors:
+    needs: changes
+    if: ${{ needs.changes.outputs.doctors == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: '0'
+    - name: Generate Version
+      id: generate_version
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        WITH_V: true
+        DRY_RUN: true
+        DEFAULT_BUMP: "patch"
+    # - name: Push tag
+    #   uses: anothrNick/github-tag-action@1.67.0
+    #   id: tag_version
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+    #     WITH_V: true
+    - name: Generate Vars
+      id: generate_vars
+      run: |
+        IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
+        # Just Image name
+        IMAGE_NAME=mfurqan007/devops_p_doctors
+        #Image ID= Name + Tag
+        IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+        # IMAGE_REPO=$REGISTRY/$IMAGE_ID
+        echo "Image: $IMAGE_ID"
+        # echo "Registry: {{REGISTRY}}"
+        echo "image=$IMAGE_ID" >>$GITHUB_OUTPUT
+        echo "image_name=$IMAGE_NAME" >>$GITHUB_OUTPUT
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3.0.0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to DockerHub
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Echo Output
+      run: |
+        echo "Image from Output: ${{ steps.generate_vars.outputs.image }}"
+        echo "Repo from Output: ${{ steps.generate_vars.outputs.image_name }}"   
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5.0.0
+      with:
+        context: doctors
+        file: ./doctors/Dockerfile
+        # pull: true
+        push: true
+        tags: ${{ steps.generate_vars.outputs.image }}
+
+
+frontend:
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: '0'
+    - name: Generate Version
+      id: generate_version
+      uses: anothrNick/github-tag-action@1.67.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        WITH_V: true
+        DRY_RUN: true
+        DEFAULT_BUMP: "patch"
+    # - name: Push tag
+    #   uses: anothrNick/github-tag-action@1.67.0
+    #   id: tag_version
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.MY_TOKEN }}
+    #     WITH_V: true
+    - name: Generate Vars
+      id: generate_vars
+      run: |
+        IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
+        # Just Image name
+        IMAGE_NAME=mfurqan007/devops_p_frontend
+        #Image ID= Name + Tag
+        IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+        # IMAGE_REPO=$REGISTRY/$IMAGE_ID
+        echo "Image: $IMAGE_ID"
+        # echo "Registry: {{REGISTRY}}"
+        echo "image=$IMAGE_ID" >>$GITHUB_OUTPUT
+        echo "image_name=$IMAGE_NAME" >>$GITHUB_OUTPUT
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3.0.0
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3.0.0
+    - name: Login to DockerHub
+      uses: docker/login-action@v3.0.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Echo Output
+      run: |
+        echo "Image from Output: ${{ steps.generate_vars.outputs.image }}"
+        echo "Repo from Output: ${{ steps.generate_vars.outputs.image_name }}"   
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5.0.0
+      with:
+        context: frontend
+        file: ./frontend/Dockerfile
+        # pull: true
+        push: true
+        tags: ${{ steps.generate_vars.outputs.image }}
+

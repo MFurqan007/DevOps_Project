@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: doctor-configmap
+data:
+  create_db.js: |-
+    db.createCollection("doctor");
+    db.doctor.insertMany([
+      { id: "1", firstName: "Muhammad Ali", lastName: "Kahoot", speciality: "DevOps" },
+      { id: "2", firstName: "Good", lastName: "Doctor", speciality: "Test" },
+    ]);
+
+
+# {{ .Files.Get "create_db.js" }} | indent 4}}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  labels:
+    app: doctormongo
+  name: doctormongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doctormongo
+  # strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: doctormongo
+    spec:
+      containers:
+        - image: mongo
+          name: doctormongo
+          args: ["--dbpath", "/data/db"]
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - mongo
+          #       - --disableImplicitSessions
+          #       - --eval
+          #       - "db.adminCommand('ping')"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 6
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - mongo
+          #       - --disableImplicitSessions
+          #       - --eval
+          #       - "db.adminCommand('ping')"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 6
+          ports:
+            - containerPort: 27017
+              name: doctor-db
+          resources:
+            limits: {}
+            requests: {}
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: admin
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: password
+            - name: MONGO_INITDB_DATABASE
+              value: doctor
+          volumeMounts:
+            - name: "mongo-data-dir"
+              mountPath: "/data/db"
+            - name: "init-database"
+              mountPath: "/docker-entrypoint-initdb.d/"
+      volumes:
+        - name: "mongo-data-dir"
+        - name: "init-database"
+          configMap:
+            name: doctor-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: "mongo-data-dir"
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "4Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doctormongodb-service
+spec:
+  selector:
+    app: doctormongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017

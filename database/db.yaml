@@ -1,0 +1,199 @@
+# # apiVersion: app/v1
+# # kind: ConfigMap
+# # metadata:
+# #   name: appointment-init-script
+# # data:
+# #   init.js: |
+# #   # db = db.getSiblingDB("admin");
+# #   # db.auth(
+# #   # process.env.MONGO_INITDB_ROOT_USERNAME,
+# #   # process.env.MONGO_INITDB_ROOT_PASSWORD
+# #   # );
+# #   # db = db.getSiblingDB(process.env.MONGO_INITDB_DATABASE);
+# #   # db.createCollection("appointment");
+# #   # db.appointment.insertMany([
+# #   # { id: "1", doctor: "1", date: "21 Nov 2023", rating: "Good" },
+# #   # { id: "2", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+# #   # { id: "3", doctor: "2", date: "22 Nov 2023", rating: "Good" },
+# #   # { id: "4", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+# #   # { id: "5", doctor: "2", date: "22 Nov 2023", rating: "Good" } ]);
+# #   mongo --host mongodb-0.mongodb.default.svc.cluster.local <<EOF
+# #           use admin
+# #           db.auth("$MONGO_INITDB_ROOT_USERNAME", "$MONGO_INITDB_ROOT_PASSWORD")
+# #           use $MONGO_INITDB_DATABASE
+# #           db.createCollection("appointment")
+# #           db.appointment.insertMany([
+# #           { id: "1", doctor: "1", date: "21 Nov 2023", rating: "Good" },
+# #           { id: "2", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+# #           { id: "3", doctor: "2", date: "22 Nov 2023", rating: "Good" },
+# #           { id: "4", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+# #           { id: "5", doctor: "2", date: "22 Nov 2023", rating: "Good" }]);
+# #           EOF
+
+# ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: mongodb
+# spec:
+#   # serviceName: "appointment-mongo"
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: mongodb
+#   template:
+#     metadata:
+#       labels:
+#         app: mongodb
+#     spec:
+#       containers:
+#         - name: mongodb
+#           image: mongo
+#           args: ["--dbpath", "/data/db"]
+#           # command:
+#           #   [
+#           #     chmod +x /docker-entrypoint-initdb.d/appointment_mongo_init.js,
+#           #     /docker-entrypoint-initdb.d/appointment_mongo_init.js,
+#           #   ]
+#           env:
+#             - name: MONGO_INITDB_ROOT_USERNAME
+#               value: admin
+#             - name: MONGO_INITDB_ROOT_PASSWORD
+#               value: password
+#             - name: MONGO_INITDB_DATABASE
+#               value: appointment
+#           ports:
+#             - containerPort: 27017
+#               name: appointment-db
+#           resources:
+#             limits: {}
+#             requests: {}
+#           volumeMounts:
+#             - name: appointment-c
+#               mountPath: /data/db
+#             - name: scripts
+#               mountPath: /docker-entrypoint-initdb.d/
+#       volumes:
+#         - name: scripts
+#           configMap:
+#             name: front0end-config1
+
+#   volumeClaimTemplates:
+#     - metadata:
+#         name: appointment-c
+#       spec:
+#         accessModes: ["ReadWriteOnce"]
+#         resources:
+#           requests:
+#             storage: "4Gi"
+
+#---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: create-db-configmap
+data:
+  create_db.js: |-
+    db.createCollection("appointment");
+    db.appointment.insertMany([
+    { id: "1", doctor: "1", date: "21 Nov 2023", rating: "Good" },
+    { id: "2", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+    { id: "3", doctor: "2", date: "22 Nov 2023", rating: "Good" },
+    { id: "4", doctor: "1", date: "22 Nov 2023", rating: "Bad" },
+    { id: "5", doctor: "2", date: "22 Nov 2023", rating: "Good" }]);
+
+
+# {{ .Files.Get "create_db.js" }} | indent 4}}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  labels:
+    app: mongo
+  name: mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  # strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - image: mongo
+          name: mongo
+          args: ["--dbpath", "/data/db"]
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - mongo
+          #       - --disableImplicitSessions
+          #       - --eval
+          #       - "db.adminCommand('ping')"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 6
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - mongo
+          #       - --disableImplicitSessions
+          #       - --eval
+          #       - "db.adminCommand('ping')"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 6
+          ports:
+            - containerPort: 27017
+              name: appointment-db
+          resources:
+            limits: {}
+            requests: {}
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: admin
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: password
+            - name: MONGO_INITDB_DATABASE
+              value: appointment
+          volumeMounts:
+            - name: "mongo-data-dir"
+              mountPath: "/data/db"
+            - name: "init-database"
+              mountPath: "/docker-entrypoint-initdb.d/"
+      volumes:
+        - name: "mongo-data-dir"
+        - name: "init-database"
+          configMap:
+            name: create-db-configmap
+  volumeClaimTemplates:
+    - metadata:
+        name: "mongo-data-dir"
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: "4Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+    # clusterIP: None
